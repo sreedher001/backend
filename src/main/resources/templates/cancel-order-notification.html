@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; padding: 30px; }
+        h2 { color: #c0392b; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 10px; border: 1px solid #ddd; }
+        .footer { margin-top: 30px; font-size: 12px; color: #777; text-align: center; }
+    </style>
+</head>
+<body>
+    <h2>Order Cancelled Notification</h2>
+    <p><strong>Order Number:</strong> <span th:text="${orderNumber}"></span></p>
+    <p><strong>Cancelled By:</strong> <span th:text="${cancelledBy}"></span></p>
+    <p><strong>Role:</strong> <span th:text="${role}"></span></p>
+    <p><strong>Reason:</strong> <span th:text="${reason}"></span></p>
+    <p><strong>Cancelled At:</strong> <span th:text="${cancelledAt}"></span></p>
+
+    <h3>Order Items</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Product</th>
+                <th>Qty</th>
+                <th>Price(1qty)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="item, stat : ${items}">
+                <td th:text="${stat.count}">1</td>
+                <td th:text="${item.productName}">Product</td>
+                <td th:text="${item.quantity}">1</td>
+                <td th:text="${item.price}">100</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p class="footer">©ZFC - This is an automated notification</p>
+</body>
+</html>

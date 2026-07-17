@@ -1,0 +1,21 @@
+package com.mindoot.onlinestore.enums;
+
+public enum ReturnStatus {
+	    REQUESTED,
+	    APPROVED,
+	    REJECTED,
+	    PICKUP_PENDING,
+	    PICKUP_SCHEDULED,RECEIVED,
+	    PICKED_UP,
+	    IN_TRANSIT,
+	    RECEIVED_AT_WAREHOUSE,
+	    MANUAL_ACTION_REQUIRED,
+	    QC_PENDING,
+	    QC_PASSED,
+	    QC_FAILED,
+	    REFUND_INITIATED,
+	    REFUND_COMPLETED,REFUND_REJECTED,
+	    CLOSED
+	
+
+}

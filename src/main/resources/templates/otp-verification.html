@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>ZFC Email Verification</title>
+</head>
+<body style="font-family: 'Segoe UI', Georgia, serif; background-color: #f7f7f7; margin: 0; padding: 0; color: #333;">
+
+    <div style="max-width: 600px; margin: 20px auto; background-color: #fff;
+                border-radius: 10px; box-shadow: 0 0 15px rgba(0,0,0,0.1);">
+
+        <!-- Header -->
+        <div style="background-color: #000; color: #fff; padding: 25px; text-align: center; border-top-left-radius: 10px; border-top-right-radius: 10px;">
+            <h1 style="margin: 0; font-size: 22px;"> ZFC </h1>
+            <p style="margin: 5px 0 0; color: #D4AF37;">Secure Email Verification</p>
+        </div>
+
+        <!-- Body -->
+        <div style="padding: 30px; text-align: center;">
+            <p style="font-size: 16px; margin-bottom: 10px;">Hello <strong th:text="${userName}">User</strong>,</p>
+            <p style="font-size: 15px; margin-bottom: 25px;">
+                Please use the following OTP to verify your account:
+            </p>
+
+            <!-- OTP Display -->
+            <div style="background-color: #faf3dd; color: #D4AF37; font-size: 32px; 
+                        font-weight: bold; display: inline-block; padding: 15px 35px; 
+                        border-radius: 8px; border: 2px solid #D4AF37; letter-spacing: 3px;"
+                 th:text="${otp}">123456</div>
+
+            <p style="margin-top: 30px; font-size: 14px; color: #555;">
+                This code is valid for <strong>5 minutes</strong>.  
+                Please do not share it with anyone for your security.
+            </p>
+
+            <p style="margin-top: 25px;">– <strong>ZFC Security Team</strong></p>
+        </div>
+
+        <!-- Footer -->
+        <div style="text-align: center; padding: 20px; background-color: #fafafa; border-top: 1px solid #eee; font-size: 13px; color: #777;">
+            <p>If you didn’t request this, please ignore this email.</p>
+            <p><a th:href="${appRedirectUrl}" style="color: #D4AF37; text-decoration: none;">Visit our store</a></p>
+        </div>
+
+    </div>
+</body>
+</html>

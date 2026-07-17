@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+	<meta charset="UTF-8">
+	<title>New Order Placed - [[${order.orderNumber}]]</title>
+	<style>
+		body {
+			font-family: 'Segoe UI', sans-serif;
+			background-color: #f4f6f9;
+			margin: 0;
+			padding: 0;
+			color: #333;
+		}
+
+		.container {
+			background-color: #ffffff;
+			margin: 30px auto;
+			padding: 30px;
+			max-width: 700px;
+			border-radius: 12px;
+			box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+		}
+
+		h2 {
+			color: #2c3e50;
+			margin-bottom: 10px;
+		}
+
+		.order-summary,
+		.customer-info {
+			margin-top: 20px;
+		}
+
+		.info-block {
+			margin-bottom: 10px;
+		}
+
+		.label {
+			font-weight: bold;
+			color: #555;
+		}
+
+		table {
+			width: 100%;
+			margin-top: 15px;
+			border-collapse: collapse;
+		}
+
+		th,
+		td {
+			text-align: left;
+			padding: 10px 8px;
+			border-bottom: 1px solid #ddd;
+		}
+
+		th {
+			background-color: #f8f9fa;
+		}
+
+		.total-row td {
+			font-weight: bold;
+			border-top: 2px solid #ccc;
+		}
+
+		.btn {
+			display: inline-block;
+			margin-top: 25px;
+			padding: 12px 20px;
+			background-color: black;
+			color: white;
+			text-decoration: none;
+			border-radius: 6px;
+			font-weight: bold;
+			cursor: pointer;
+		}
+
+		.footer {
+			text-align: center;
+			font-size: 12px;
+			color: #888;
+			margin-top: 30px;
+		}
+	</style>
+</head>
+
+<body>
+	<div class="container">
+		<h2> New Order Placed</h2>
+		<p>Order Number: <strong th:text="${order.orderNumber}">#123456</strong></p>
+		<p>Placed On:
+			<strong th:text="${#temporals.format(order.orderDate, 'dd MMM yyyy HH:mm')}">29 Jul 2025</strong>
+		</p>
+
+		<div class="customer-info">
+			<h3> Customer Details</h3>
+			<div class="info-block">
+				<span class="label">Name:</span> <span th:text="${order.user.username}">ZFC</span>
+			</div>
+			<div class="info-block">
+				<span class="label">Email:</span> <span th:text="${order.user.email}">user@example.com</span>
+			</div>
+			<div class="info-block">
+				<span class="label">Phone:</span> <span th:text="${order.user.phoneNumber}">+91-9876543210</span>
+			</div>
+			<div class="info-block">
+				<span class="label">Shipping Address:</span>
+				<div th:text="${order.shippingAddress}">123 Street, City, State, 123456</div>
+			</div>
+			<div class="info-block">
+				<span class="label">Payment Method:</span> <span th:text="${order.paymentMode}">COD</span>
+			</div>
+		</div>
+
+		<!--<div class="order-summary">
+			<h3> Order Items</h3>
+			<table>
+				<thead>
+					<tr>
+						<th>Product</th>
+						<th>Qty</th>
+						<th>Price (Rs)</th>
+						<th>Total (Rs)</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr th:each="item : ${order.items}">
+						<td th:text="${item.productName}"></td>
+						<td th:text="${item.quantity}"></td>
+						<td th:text="${ item.price}"></td>
+						<td th:text="${item.quantity * item.price}"></td>
+					</tr>
+
+					
+					<tr class="total-row">
+						<td colspan="3">Subtotal</td>
+						<td th:text="${order.totalAmount}"></td>
+					</tr>
+
+					
+					<tr class="total-row" th:if="${order.totalAmount <= 999}">
+						<td colspan="3">Shipping</td>
+						<td th:text="${order.shippingFee}"></td>
+					</tr>
+
+					<tr class="total-row" th:if="${order.totalAmount > 999}">
+						<td colspan="3">Shipping</td>
+						<td>FREE</td>
+					</tr>
+
+					
+					<tr class="total-row">
+						<td colspan="3">Total Amount</td>
+						<td th:text="${(order.totalAmount > 999 ? order.totalAmount : (order.totalAmount + order.shippingFee))}"></td>
+					</tr>
+				</tbody>
+			</table>
+		</div> -->
+
+		<a class="btn" th:href="${dashboardUrl + order.id}">
+			View Order in Dashboard
+		</a>
+
+		<div class="footer">
+			You are receiving this email because you are an admin of the boutique platform.<br>
+			ZFC. All rights reserved.
+		</div>
+	</div>
+</body>
+
+</html>

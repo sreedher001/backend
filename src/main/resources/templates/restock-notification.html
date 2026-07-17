@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>ZFC Back In Stock</title>
+</head>
+<body style="font-family: 'Segoe UI', Georgia, serif; background-color: #f7f7f7; margin: 0; padding: 0; color: #333;">
+
+<div style="max-width: 600px; margin: 20px auto; background-color: #fff;
+            border-radius: 10px; box-shadow: 0 0 15px rgba(0,0,0,0.08);">
+
+    <!-- Header -->
+    <div style="background-color: #000; color: #fff; padding: 25px; text-align: center;
+                border-top-left-radius: 10px; border-top-right-radius: 10px;">
+        <h1 style="margin: 0; font-size: 22px;">ZFC</h1>
+        <p style="margin: 5px 0 0; color: #D4AF37;">Back In Stock</p>
+    </div>
+
+    <!-- Body -->
+    <div style="padding: 30px; text-align: center;">
+        <p style="font-size: 16px; margin-bottom: 15px;">
+            Good news ✨
+        </p>
+
+        <p style="font-size: 15px; margin-bottom: 25px;">
+            The size <strong th:text="${size}">M</strong> you were waiting for is now available.
+        </p>
+
+        <!-- CTA Button -->
+        <a th:href="${productRedirectUrl}"
+           style="display: inline-block; padding: 12px 28px;
+                  background-color: #000; color: #fff;
+                  text-decoration: none; border-radius: 6px;
+                  font-size: 14px; letter-spacing: 1px;">
+            SHOP NOW
+        </a>
+
+        <p style="margin-top: 30px; font-size: 13px; color: #777;">
+            Hurry — limited pieces available.
+        </p>
+
+        <p style="margin-top: 25px;">– <strong>ZFC Team</strong></p>
+    </div>
+
+</div>
+</body>
+</html>

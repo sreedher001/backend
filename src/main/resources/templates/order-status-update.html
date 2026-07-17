@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="UTF-8">
+	<title>Order Status Update</title>
+</head>
+<body style="font-family: 'Segoe UI', Georgia, serif; background-color: #f7f7f7; margin: 0; padding: 0; color: #333;">
+
+	<div style="max-width: 700px; margin: 20px auto; background-color: #fff; border-radius: 10px; box-shadow: 0 0 15px rgba(0,0,0,0.1);">
+		
+		<!-- Header -->
+		<div style="background-color: #000; color: #fff; padding: 30px; text-align: center;">
+			<h1 style="margin: 0;">Order Update from <span style="color: #D4AF37;">ZFC</span></h1>
+		</div>
+
+		<!-- Body -->
+		<div style="padding: 30px;">
+			<p style="font-size: 16px;">Hi <strong th:text="${userName}">User</strong>,</p>
+			<p>Your order <strong th:text="${orderNumber}">#ORD1234</strong> has been updated.</p>
+
+			<p>
+				<strong>Current Status:</strong> 
+				<span th:text="${orderStatus}" 
+					  th:style="'color:' + 
+					  (${orderStatus} == 'Shipped' ? '#1E90FF' : 
+					  (${orderStatus} == 'Delivered' ? '#228B22' : 
+					  (${orderStatus} == 'Cancelled' ? '#FF0000' : '#D4AF37'))) + 
+					  '; font-weight:bold;'">Shipped</span>
+			</p>
+
+			<!-- Progress Bar -->
+			<div style="margin: 10px 0 25px 0; width: 100%; background-color: #eee; border-radius: 5px; height: 10px;">
+				<div th:style="'width:' + 
+					(${orderStatus} == 'Pending' ? '25%' : 
+					(${orderStatus} == 'Shipped' ? '75%' : 
+					(${orderStatus} == 'Delivered' ? '100%' : '50%'))) + 
+					'; background-color:' + 
+					(${orderStatus} == 'Delivered' ? '#228B22' : 
+					(${orderStatus} == 'Shipped' ? '#1E90FF' : '#D4AF37')) + 
+					'; height:10px; border-radius:5px;'">
+				</div>
+			</div>
+
+			<!-- Status & Tracking Buttons -->
+<div style="text-align: center; margin-top: 30px;">
+    <!-- Check Status (Gold Outline, Light Gold Tint) -->
+    <a th:href="${trackingUrl}"
+       style="display: inline-block;
+              background-color: #faf3dd; /* light tint of gold */
+              color: #D4AF37;
+              text-decoration: none;
+              padding: 12px 24px;
+              border-radius: 6px;
+              font-weight: bold;
+              margin-right: 10px;
+              border: 2px solid #D4AF37;">
+        Check Status
+    </a>
+
+    <!-- Track Order (Black Outline, Light Gray Tint) -->
+    <a th:href="${orderTrackingUrl}"
+       style="display: inline-block;
+              background-color: #f2f2f2; /* light tint of black */
+              color: #000;
+              text-decoration: none;
+              padding: 12px 24px;
+              border-radius: 6px;
+              font-weight: bold;
+              border: 2px solid #000;">
+        Track Order
+    </a>
+</div>
+
+
+
+
+			<p style="margin-top: 25px;">Thank you for shopping with <strong>ZFC</strong>!</p>
+		</div>
+
+		<!-- Footer -->
+		<div style="text-align: center; padding: 25px; background-color: #fafafa; border-top: 1px solid #eee; font-size: 13px; color: #777;">
+			<p>If you have any questions, contact us at 
+				<a href="mailto:zyrafashioncurves@gmail.com" style="color: #D4AF37;">zyrafashioncurves@gmail.com</a>.
+			</p>
+			<p>
+				<a th:href="${appRedirectUrl}" style="color: #D4AF37; text-decoration: none;">Visit our store</a>
+			</p>
+		</div>
+	</div>
+
+</body>
+</html>

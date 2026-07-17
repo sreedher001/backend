@@ -1,0 +1,51 @@
+<button id="pay-button">Pay Now</button>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+<script>
+    const ORDER_NUMBER = "e4ad2ee5-c556-4e12-9ae3-faedf86178c8"; // Change to your actual test order number
+    const JWT_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJjaGFuZGhydWJhaTFAZ21haWwuY29tIiwiaWF0IjoxNzUzODcyNTY1LCJyb2xlcyI6WyJST0xFX0FETUlOIiwiUk9MRV9NT0RFUkFUT1IiXSwiaWQiOjEsIm5hbWUiOiJDaGFuZGhydSBNIiwiZW1haWwiOiJjaGFuZGhydWJhaTFAZ21haWwuY29tIiwicGhvbmUiOjEsImV4cCI6MTc1Mzk1ODk2NX0.mamGo0NptIxXmwqlbfNzHk65zymbmJov36R3UPYSqVA";
+
+    document.getElementById('pay-button').onclick = function () {
+        fetch('http://localhost:8080/api/payments/create-order', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + JWT_TOKEN
+            },
+            body: JSON.stringify({ orderNumber: ORDER_NUMBER })
+        })
+        .then(response => response.json())
+        .then(order => {
+            const options = {
+                key: "rzp_test_zdcal4HaDm5CyD",
+                amount: order.amount,
+                currency: order.currency,
+                name: "Your Company",
+                description: "Test Transaction",
+                order_id: order.razorpayOrderId,
+                handler: function (response) {
+                    // Verify the signature
+                    fetch('http://localhost:8080/api/payments/verify', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + JWT_TOKEN
+                        },
+                        body: JSON.stringify({
+                            orderNumber: ORDER_NUMBER,
+                            razorpayPaymentId: response.razorpay_payment_id,
+                            razorpayOrderId: response.razorpay_order_id,
+                            razorpaySignature: response.razorpay_signature
+                        })
+                    })
+                    .then(() => alert('✅ Payment verified and order marked as PAID!'))
+                    .catch(() => alert('❌ Payment verification failed!'));
+                },
+                theme: { color: "#3399cc" }
+            };
+            const rzp = new Razorpay(options);
+            rzp.open();
+        })
+        .catch(err => console.error(err));
+    };
+</script>

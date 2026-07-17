@@ -1,0 +1,51 @@
+name: Deploy Spring Boot to AWS Lambda via S3
+
+on:
+  push:
+    branches: [ develop ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout source code
+      uses: actions/checkout@v3
+
+    - name: Set up Java 17
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Build Spring Boot Lambda
+      run: mvn clean package -DskipTests
+
+    - name: Create Lambda ZIP (extract BOOT-INF/classes and libs)
+      run: |
+        mkdir lambda-zip
+        unzip target/*-SNAPSHOT.jar -d lambda-zip
+        mkdir extracted
+        cp -r lambda-zip/BOOT-INF/classes/* extracted/
+        mkdir -p extracted/lib
+        cp lambda-zip/BOOT-INF/lib/*.jar extracted/lib/
+        cd extracted
+        zip -r ../function.zip .
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: eu-north-1
+
+    - name: Upload ZIP to S3
+      run: aws s3 cp function.zip s3://zfc-lambda-deploy/function.zip
+
+    - name: Deploy to AWS Lambda from S3
+      run: |
+        aws lambda update-function-code \
+          --function-name zfc-onlinestore-springboot-lambda-dev \
+          --s3-bucket zfc-lambda-deploy \
+          --s3-key function.zip \
+          --region eu-north-1

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 30px;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            background-color: #ffffff;
+            border-radius: 10px;
+            padding: 30px;
+            max-width: 700px;
+            margin: auto;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 20px;
+        }
+
+        .header h1 {
+            color: #4a4a4a;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            color: #888;
+            font-size: 15px;
+        }
+
+        .details {
+            margin-top: 30px;
+        }
+
+        .details p {
+            margin: 6px 0;
+            font-size: 15px;
+            color: #333;
+        }
+
+        .details strong {
+            color: #555;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 30px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        th {
+            background-color: #1a73e8;
+            color: #ffffff;
+            padding: 12px 15px;
+            font-size: 14px;
+            text-align: left;
+        }
+
+        td {
+            padding: 12px 15px;
+            font-size: 14px;
+            color: #333;
+            border-bottom: 1px solid #eee;
+        }
+
+        .summary {
+            margin-top: 30px;
+            font-size: 16px;
+            color: #333;
+        }
+
+        .summary p {
+            font-weight: bold;
+        }
+
+        .footer {
+            text-align: center;
+            color: #777;
+            font-size: 13px;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>ZFC - Order Invoice</h1>
+            <p>Thank you for your purchase 🎉</p>
+        </div>
+
+        <div class="details">
+            <p><strong>Order ID:</strong> <span th:text="${orderId}"></span></p>
+            <p><strong>Customer:</strong> <span th:text="${customerName}"></span></p>
+            <p><strong>Email:</strong> <span th:text="${email}"></span></p>
+            <p><strong>Payment ID:</strong> <span th:text="${paymentId}"></span></p>
+            <p><strong>Payment Date:</strong> <span th:text="${paymentDate}"></span></p>
+        </div>
+
+        <h3 style="margin-top: 40px; color: #444;">Order Summary</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Product</th>
+                    <th>Qty</th>
+                    <th>Price (Rs)</th>
+                    <th>Total (Rs)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="item, iterStat : ${items}">
+                    <td th:text="${iterStat.count}"></td>
+                    <td th:text="${item.productName}"></td>
+                    <td th:text="${item.quantity}"></td>
+
+                    <!-- Replace ₹ with Rs -->
+                    <td th:text="${item.price}"></td>
+                    <td th:text="${item.total}"></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="summary">
+            <p>Total Amount Paid: <span th:text="${totalAmount}"></span></p>
+        </div>
+
+        <div class="footer">
+            <p>If you have any questions, contact <a href="mailto:support@yourshop.com">zyrafashioncurves@gmail.com</a></p>
+            <p>&copy; ZFC Boutique. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>
