@@ -31,6 +31,7 @@ public class ProductSearchIndex {
     private String productName;
     private String variantName;
     private String slug;
+    private String variantSlug;
 
     private Long categoryId;
     private String categoryName;
@@ -44,8 +45,11 @@ public class ProductSearchIndex {
     private String unit;
 
     private Double retailPrice;
+    private Double mrp;
     private Double wholesalePrice;
     private Double discountPercentage;
+    private Boolean retailEnabled;
+    private Boolean wholesaleEnabled;
 
     private Double rating;
 

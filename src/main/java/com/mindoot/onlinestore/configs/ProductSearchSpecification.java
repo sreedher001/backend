@@ -50,6 +50,21 @@ public class ProductSearchSpecification {
 				);
 			}
 
+			if (request.getInStock() != null) {
+				predicates.add(cb.equal(root.get("inStock"), request.getInStock()));
+			}
+
+			if (request.getQuery() != null && !request.getQuery().isBlank()) {
+				String likeValue = "%" + request.getQuery().toLowerCase() + "%";
+				predicates.add(cb.or(
+					cb.like(cb.lower(root.get("productName")), likeValue),
+					cb.like(cb.lower(root.get("variantName")), likeValue),
+					cb.like(cb.lower(root.get("brand")), likeValue),
+					cb.like(cb.lower(root.get("tags")), likeValue),
+					cb.like(cb.lower(root.get("categoryName")), likeValue)
+				));
+			}
+
 			return cb.and(predicates.toArray(new Predicate[0]));
 		};
 	}

@@ -1,6 +1,7 @@
 package com.mindoot.onlinestore.controllers;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +16,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.mindoot.onlinestore.model.Role;
+import com.mindoot.onlinestore.dto.UserSummaryDto;
+import com.mindoot.onlinestore.model.ERole;
 import com.mindoot.onlinestore.model.User;
 import com.mindoot.onlinestore.service.AdminService;
 
@@ -44,8 +46,11 @@ public class AdminController {
      * @return the all users
      */
     @GetMapping("/users")
-    public ResponseEntity<List<User>> getAllUsers() {
-        return ResponseEntity.ok(adminService.getAllUsers());
+    public ResponseEntity<List<UserSummaryDto>> getAllUsers() {
+        List<UserSummaryDto> users = adminService.getAllUsers().stream()
+                .map(this::toSummaryDto)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(users);
     }
 
     /**
@@ -55,8 +60,8 @@ public class AdminController {
      * @return the user by id
      */
     @GetMapping("/users/{id}")
-    public ResponseEntity<User> getUserById(@PathVariable("id") Long id) {
-        return ResponseEntity.ok(adminService.getUserById(id));
+    public ResponseEntity<UserSummaryDto> getUserById(@PathVariable("id") Long id) {
+        return ResponseEntity.ok(toSummaryDto(adminService.getUserById(id)));
     }
 
     /**
@@ -67,8 +72,8 @@ public class AdminController {
      * @return the response entity
      */
     @PutMapping("/users/{id}/role")
-    public ResponseEntity<User> updateUserRole(@PathVariable("id") Long id, @RequestParam("role") Role role) {
-        return ResponseEntity.ok(adminService.updateUserRole(id, role));
+    public ResponseEntity<UserSummaryDto> updateUserRole(@PathVariable("id") Long id, @RequestParam("role") ERole role) {
+        return ResponseEntity.ok(toSummaryDto(adminService.updateUserRole(id, role)));
     }
 
     /**
@@ -79,8 +84,23 @@ public class AdminController {
      * @return the response entity
      */
     @PutMapping("/users/{id}/status")
-    public ResponseEntity<User> toggleUserStatus(@PathVariable("id") Long id, @RequestParam boolean status) {
-        return ResponseEntity.ok(adminService.toggleUserStatus(id, status));
+    public ResponseEntity<UserSummaryDto> toggleUserStatus(@PathVariable("id") Long id, @RequestParam boolean status) {
+        return ResponseEntity.ok(toSummaryDto(adminService.toggleUserStatus(id, status)));
+    }
+
+    private UserSummaryDto toSummaryDto(User user) {
+        return UserSummaryDto.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .phoneNumber(user.getPhoneNumber())
+                .roles(user.getRoles().stream().map(r -> r.getName().name()).collect(Collectors.toList()))
+                .enabled(user.isEnabled())
+                .emailVerified(user.isEmailVerified())
+                .phoneNumberVerified(user.isPhoneNumberVerified())
+                .preferredPurchaseType(user.getPreferredPurchaseType() != null ? user.getPreferredPurchaseType().name() : null)
+                .createdOn(user.getCreatedOn())
+                .build();
     }
 
     /**

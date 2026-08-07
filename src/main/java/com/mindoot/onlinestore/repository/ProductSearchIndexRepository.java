@@ -26,19 +26,26 @@ public interface ProductSearchIndexRepository extends
 	    product_name,
 	    variant_name,
 	    slug,
+	    variant_slug,
 	    category_id,
+	    category_name,
+	    sub_category_id,
+	    sub_category_name,
 	    brand,
 	    tags,
 	    weight,
 	    unit,
 	    retail_price,
+	    mrp,
 	    wholesale_price,
 	    rating,
 	    is_featured,
 	    active,
 	    image_url,
 	    in_stock,
-	    sku
+	    sku,
+	    retail_enabled,
+	    wholesale_enabled
 	)
 	SELECT
 	    p.id,
@@ -46,21 +53,30 @@ public interface ProductSearchIndexRepository extends
 	    p.name,
 	    v.variant_name,
 	    p.slug,
+	    v.slug,
 	    p.category_id,
+	    c.name,
+	    p.sub_category_id,
+	    sc.name,
 	    p.brand,
 	    p.tags,
 	    v.weight,
 	    v.unit,
 	    v.retail_price,
+	    v.mrp,
 	    v.wholesale_price,
 	    v.rating,
 	    v.is_featured,
 	    v.active,
 	    v.image_url,
 	    CASE WHEN v.id IN (SELECT i.variant_id FROM inventory i WHERE i.available_quantity > 0) THEN true ELSE false END,
-	    v.sku
+	    v.sku,
+	    v.retail_enabled,
+	    v.wholesale_enabled
 	FROM products p
 	JOIN product_variants v ON v.product_id = p.id
+	LEFT JOIN categories c ON c.id = p.category_id
+	LEFT JOIN categories sc ON sc.id = p.sub_category_id
 	WHERE v.id = :variantId
 	""", nativeQuery = true)
 	void insertIndexByVariantId(@Param("variantId") Long variantId);

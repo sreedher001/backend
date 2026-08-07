@@ -1,5 +1,6 @@
 package com.mindoot.onlinestore.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.mindoot.onlinestore.enums.PurchaseType;
 
 import jakarta.persistence.*;
@@ -38,6 +39,7 @@ public class OrderItem {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id")
+    @JsonIgnore
     private Order order;
 
     @ManyToOne(fetch = FetchType.LAZY)

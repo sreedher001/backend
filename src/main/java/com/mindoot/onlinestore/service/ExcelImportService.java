@@ -24,6 +24,7 @@ import com.mindoot.onlinestore.repository.CategoryRepository;
 import com.mindoot.onlinestore.repository.InventoryRepository;
 import com.mindoot.onlinestore.repository.ProductRepository;
 import com.mindoot.onlinestore.repository.ProductVariantRepository;
+import com.mindoot.onlinestore.service.ProductSearchService;
 import com.mindoot.onlinestore.utility.UserInfo;
 
 import lombok.extern.slf4j.Slf4j;
@@ -43,6 +44,9 @@ public class ExcelImportService {
 
     @Autowired
     private CategoryRepository categoryRepository;
+
+    @Autowired
+    private ProductSearchService searchIndexService;
 
     public Map<String, Object> importFromExcel(MultipartFile file, UserInfo userInfo) throws Exception {
         Map<String, Object> result = new HashMap<>();
@@ -180,6 +184,8 @@ public class ExcelImportService {
                     inventory.setInventoryStatus(InventoryStatus.IN_STOCK);
                     inventory.setLastUpdated(LocalDateTime.now());
                     inventoryRepository.save(inventory);
+
+                    searchIndexService.refreshSearchIndex(savedVariant.getId());
 
                     successCount++;
                 } catch (Exception e) {

@@ -3,7 +3,10 @@ package com.mindoot.onlinestore.service.serviceImpl;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -39,11 +42,13 @@ import com.mindoot.onlinestore.model.ProductVariant;
 import com.mindoot.onlinestore.model.VariantRatingSummary;
 import com.mindoot.onlinestore.repository.CategoryRepository;
 import com.mindoot.onlinestore.repository.InventoryRepository;
+import com.mindoot.onlinestore.repository.OrderItemRepository;
 import com.mindoot.onlinestore.repository.ProductImageRepository;
 import com.mindoot.onlinestore.repository.ProductRepository;
 import com.mindoot.onlinestore.repository.ProductVariantRepository;
 import com.mindoot.onlinestore.repository.VariantRatingSummaryRepository;
 import com.mindoot.onlinestore.service.LocalFileStorageService;
+import com.mindoot.onlinestore.service.ProductSearchService;
 import com.mindoot.onlinestore.service.ProductService;
 import com.mindoot.onlinestore.utility.UserInfo;
 
@@ -73,6 +78,12 @@ public class ProductServiceImpl implements ProductService {
 
     @Autowired
     private LocalFileStorageService fileStorageService;
+
+    @Autowired
+    private ProductSearchService searchIndexService;
+
+    @Autowired
+    private OrderItemRepository orderItemRepository;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -181,13 +192,16 @@ public class ProductServiceImpl implements ProductService {
         variant.setSku((String) metadataMap.get("variantSku"));
         variant.setBarcode((String) metadataMap.get("variantBarcode"));
         variant.setRetailPrice(metadataMap.get("retailPrice") != null ? ((Number) metadataMap.get("retailPrice")).doubleValue() : 0.0);
+        variant.setMrp(metadataMap.get("mrp") != null ? ((Number) metadataMap.get("mrp")).doubleValue() : null);
         variant.setWholesalePrice(metadataMap.get("wholesalePrice") != null ? ((Number) metadataMap.get("wholesalePrice")).doubleValue() : 0.0);
         variant.setWholesaleEnabled(metadataMap.get("wholesaleEnabled") != null ? (Boolean) metadataMap.get("wholesaleEnabled") : false);
+        variant.setRetailEnabled(metadataMap.get("retailEnabled") != null ? (Boolean) metadataMap.get("retailEnabled") : true);
         variant.setMinWholesaleQuantity(metadataMap.get("minWholesaleQuantity") != null ? ((Number) metadataMap.get("minWholesaleQuantity")).intValue() : null);
         variant.setWholesaleDiscount(metadataMap.get("wholesaleDiscount") != null ? ((Number) metadataMap.get("wholesaleDiscount")).doubleValue() : null);
         variant.setActive(true);
         variant.setSortOrder(0);
         variant.setSku(variant.getSku() != null ? variant.getSku() : generateSku(savedProduct.getName(), variant.getWeight(), variant.getUnit()));
+        variant.setSlug(generateVariantSlug(savedProduct.getName(), variant.getWeight(), variant.getUnit()));
 
         ProductVariant savedVariant = productVariantRepository.save(variant);
 
@@ -218,6 +232,8 @@ public class ProductServiceImpl implements ProductService {
                 productImageRepository.save(productImage);
             }
         }
+
+        searchIndexService.refreshSearchIndex(savedVariant.getId());
 
         log.info("Product created: {} with variant: {}", savedProduct.getId(), savedVariant.getId());
     }
@@ -259,12 +275,15 @@ public class ProductServiceImpl implements ProductService {
         variant.setSku(request.getSku() != null ? request.getSku() : generateSku(product.getName(), request.getWeight(), request.getUnit()));
         variant.setBarcode(request.getBarcode());
         variant.setRetailPrice(request.getRetailPrice());
+        variant.setMrp(request.getMrp());
         variant.setWholesalePrice(request.getWholesalePrice());
         variant.setWholesaleEnabled(request.getWholesaleEnabled());
+        variant.setRetailEnabled(request.getRetailEnabled() != null ? request.getRetailEnabled() : true);
         variant.setMinWholesaleQuantity(request.getMinWholesaleQuantity());
         variant.setWholesaleDiscount(request.getWholesaleDiscount());
         variant.setActive(request.getActive() != null ? request.getActive() : true);
         variant.setSortOrder(request.getSortOrder() != null ? request.getSortOrder() : 0);
+        variant.setSlug(generateVariantSlug(product.getName(), variant.getWeight(), variant.getUnit()));
 
         if (productVariantRepository.existsBySku(variant.getSku())) {
             throw new BadRequestException("Variant with SKU '" + variant.getSku() + "' already exists");
@@ -300,6 +319,8 @@ public class ProductServiceImpl implements ProductService {
             }
         }
 
+        searchIndexService.refreshSearchIndex(savedVariant.getId());
+
         log.info("Variant added to product: {} variant: {}", productId, savedVariant.getId());
     }
 
@@ -314,8 +335,10 @@ public class ProductServiceImpl implements ProductService {
         if (request.getSku() != null) variant.setSku(request.getSku());
         if (request.getBarcode() != null) variant.setBarcode(request.getBarcode());
         if (request.getRetailPrice() != null) variant.setRetailPrice(request.getRetailPrice());
+        if (request.getMrp() != null) variant.setMrp(request.getMrp());
         if (request.getWholesalePrice() != null) variant.setWholesalePrice(request.getWholesalePrice());
         if (request.getWholesaleEnabled() != null) variant.setWholesaleEnabled(request.getWholesaleEnabled());
+        if (request.getRetailEnabled() != null) variant.setRetailEnabled(request.getRetailEnabled());
         if (request.getMinWholesaleQuantity() != null) variant.setMinWholesaleQuantity(request.getMinWholesaleQuantity());
         if (request.getWholesaleDiscount() != null) variant.setWholesaleDiscount(request.getWholesaleDiscount());
         if (request.getActive() != null) variant.setActive(request.getActive());
@@ -376,13 +399,61 @@ public class ProductServiceImpl implements ProductService {
         }
 
         productVariantRepository.save(variant);
+
+        searchIndexService.refreshSearchIndex(variant.getId());
     }
 
     @Override
     public ProductResponseDto findByVariantId(Long variantId) {
         ProductVariant variant = productVariantRepository.findById(variantId)
                 .orElseThrow(() -> new ApplicationException("Variant not found", HttpStatus.NOT_FOUND));
-        return mapToDto(variant.getProduct());
+        ProductResponseDto dto = mapToDto(variant.getProduct());
+        dto.setVariant(mapVariantToDto(variant));
+        return dto;
+    }
+
+    @Override
+    public ProductResponseDto findByVariantSlug(String slug) {
+        ProductVariant variant = productVariantRepository.findBySlug(slug)
+                .orElseThrow(() -> new ApplicationException("Variant not found", HttpStatus.NOT_FOUND));
+        ProductResponseDto dto = mapToDto(variant.getProduct());
+        dto.setVariant(mapVariantToDto(variant));
+        return dto;
+    }
+
+    /**
+     * Ranks variants by real sales volume (order_items, excluding cancelled
+     * and returned orders). Falls back to featured/highest-rated variants
+     * when the store has no order history yet, so the section never renders
+     * empty on a fresh deployment.
+     */
+    @Override
+    public List<ProductResponseDto> getBestSellers(int limit) {
+        List<OrderItemRepository.TopSellingVariant> topSelling = orderItemRepository.findTopSellingVariants(limit);
+        List<Long> variantIds = topSelling.stream()
+                .map(OrderItemRepository.TopSellingVariant::getVariantId)
+                .collect(Collectors.toList());
+
+        List<ProductVariant> variants;
+        if (variantIds.isEmpty()) {
+            variants = productVariantRepository.findTop12ByActiveTrueOrderByIsFeaturedDescRatingDesc();
+        } else {
+            Map<Long, ProductVariant> byId = productVariantRepository.findAllById(variantIds).stream()
+                    .filter(v -> v.getActive() != null && v.getActive())
+                    .collect(Collectors.toMap(ProductVariant::getId, v -> v, (a, b) -> a, LinkedHashMap::new));
+            variants = variantIds.stream()
+                    .map(byId::get)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+        }
+
+        return variants.stream()
+                .map(variant -> {
+                    ProductResponseDto dto = mapToDto(variant.getProduct());
+                    dto.setVariant(mapVariantToDto(variant));
+                    return dto;
+                })
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -424,6 +495,8 @@ public class ProductServiceImpl implements ProductService {
                 .orElseThrow(() -> new ApplicationException("Variant not found", HttpStatus.BAD_REQUEST));
         variant.setActive(false);
         productVariantRepository.save(variant);
+
+        searchIndexService.refreshSearchIndex(variantId);
     }
 
     private ProductResponseDto mapToDto(Product product) {
@@ -507,14 +580,17 @@ public class ProductServiceImpl implements ProductService {
 
         return ProductVariantResponseDto.builder()
                 .id(variant.getId())
+                .slug(variant.getSlug())
                 .variantName(variant.getVariantName())
                 .weight(variant.getWeight())
                 .unit(variant.getUnit())
                 .sku(variant.getSku())
                 .barcode(variant.getBarcode())
                 .retailPrice(variant.getRetailPrice())
+                .mrp(variant.getMrp())
                 .wholesalePrice(variant.getWholesalePrice())
                 .wholesaleEnabled(variant.getWholesaleEnabled())
+                .retailEnabled(variant.getRetailEnabled())
                 .minWholesaleQuantity(variant.getMinWholesaleQuantity())
                 .wholesaleDiscount(variant.getWholesaleDiscount())
                 .active(variant.getActive())
@@ -546,6 +622,19 @@ public class ProductServiceImpl implements ProductService {
                 .replaceAll("\\s+", "-")
                 .replaceAll("-+", "-")
                 .replaceAll("^-|-$", "");
+    }
+
+    /** SEO-friendly per-variant slug, e.g. "turmeric-powder-100g", unique across
+     * all variants since a product's siblings differ by weight/unit. */
+    private String generateVariantSlug(String productName, String weight, String unit) {
+        String base = generateSlug(productName + " " + (weight != null ? weight : "") + (unit != null ? unit : ""));
+        String slug = base;
+        int suffix = 2;
+        while (productVariantRepository.existsBySlug(slug)) {
+            slug = base + "-" + suffix;
+            suffix++;
+        }
+        return slug;
     }
 
     @Override
@@ -596,8 +685,10 @@ public class ProductServiceImpl implements ProductService {
                 variant.setVariantName(vd.getVariantName());
                 variant.setBarcode(vd.getBarcode());
                 variant.setRetailPrice(vd.getRetailPrice() != null ? vd.getRetailPrice() : 0.0);
+                variant.setMrp(vd.getMrp());
                 variant.setWholesalePrice(vd.getWholesalePrice() != null ? vd.getWholesalePrice() : 0.0);
                 variant.setWholesaleEnabled(vd.getWholesaleEnabled() != null ? vd.getWholesaleEnabled() : false);
+                variant.setRetailEnabled(vd.getRetailEnabled() != null ? vd.getRetailEnabled() : true);
                 variant.setMinWholesaleQuantity(vd.getMinWholesaleQuantity());
                 variant.setWholesaleDiscount(vd.getWholesaleDiscount());
                 variant.setActive(true);
@@ -607,6 +698,7 @@ public class ProductServiceImpl implements ProductService {
                         ? vd.getSku()
                         : generateSku(savedProduct.getName(), vd.getWeight(), vd.getUnit());
                 variant.setSku(variantSku);
+                variant.setSlug(generateVariantSlug(savedProduct.getName(), vd.getWeight(), vd.getUnit()));
 
                 if (productVariantRepository.existsBySku(variantSku)) {
                     throw new BadRequestException("Variant with SKU '" + variantSku + "' already exists");
@@ -640,6 +732,8 @@ public class ProductServiceImpl implements ProductService {
                         productImageRepository.save(productImage);
                     }
                 }
+
+                searchIndexService.refreshSearchIndex(savedVariant.getId());
 
                 imageIndex += variantImageFiles.size();
             }
@@ -681,6 +775,7 @@ public class ProductServiceImpl implements ProductService {
                 if (!incomingVariantIds.contains(existing.getId())) {
                     existing.setActive(false);
                     productVariantRepository.save(existing);
+                    searchIndexService.refreshSearchIndex(existing.getId());
                 }
             }
 
@@ -698,8 +793,10 @@ public class ProductServiceImpl implements ProductService {
                     if (vd.getSku() != null) variant.setSku(vd.getSku());
                     if (vd.getBarcode() != null) variant.setBarcode(vd.getBarcode());
                     if (vd.getRetailPrice() != null) variant.setRetailPrice(vd.getRetailPrice());
+                    if (vd.getMrp() != null) variant.setMrp(vd.getMrp());
                     if (vd.getWholesalePrice() != null) variant.setWholesalePrice(vd.getWholesalePrice());
                     if (vd.getWholesaleEnabled() != null) variant.setWholesaleEnabled(vd.getWholesaleEnabled());
+                    if (vd.getRetailEnabled() != null) variant.setRetailEnabled(vd.getRetailEnabled());
                     if (vd.getMinWholesaleQuantity() != null) variant.setMinWholesaleQuantity(vd.getMinWholesaleQuantity());
                     if (vd.getWholesaleDiscount() != null) variant.setWholesaleDiscount(vd.getWholesaleDiscount());
                     if (vd.getSortOrder() != null) variant.setSortOrder(vd.getSortOrder());
@@ -718,21 +815,46 @@ public class ProductServiceImpl implements ProductService {
                         inventoryRepository.save(inventory);
                     }
 
+                    searchIndexService.refreshSearchIndex(variant.getId());
+
+                    if (vd.getDeletedImageIds() != null && !vd.getDeletedImageIds().isEmpty()) {
+                        List<String> pathsToRemove = new ArrayList<>();
+                        for (Long imageId : vd.getDeletedImageIds()) {
+                            ProductImage img = productImageRepository.findById(imageId).orElse(null);
+                            if (img != null) {
+                                pathsToRemove.add(img.getImageUrl());
+                                productImageRepository.deleteById(imageId);
+                            }
+                        }
+                        fileStorageService.deleteImages(pathsToRemove);
+                    }
+
                     List<MultipartFile> variantImageFiles = getVariantImages(newVariantImages, imageIndex);
                     if (!variantImageFiles.isEmpty()) {
                         String folderPath = "products/" + productId + "/" + variant.getId();
                         MultipartFile[] arr = variantImageFiles.toArray(new MultipartFile[0]);
                         List<String> imagePaths = fileStorageService.uploadImages(arr, folderPath);
-                        for (String imagePath : imagePaths) {
+
+                        List<ProductImage> currentImages = productImageRepository.findByVariantId(variant.getId());
+                        boolean hasThumbnail = currentImages.stream().anyMatch(ProductImage::getIsThumbnail);
+                        int nextSortOrder = currentImages.size();
+
+                        for (int j = 0; j < imagePaths.size(); j++) {
+                            String originalName = variantImageFiles.get(j).getOriginalFilename();
+                            boolean isFrontUpload = originalName != null && originalName.contains("_front.");
+                            boolean makeThumbnail = !hasThumbnail && (isFrontUpload || j == 0);
+
                             ProductImage productImage = new ProductImage();
-                            productImage.setImageUrl(imagePath);
+                            productImage.setImageUrl(imagePaths.get(j));
                             productImage.setVariant(variant);
                             productImage.setProduct(product);
-                            productImage.setIsThumbnail(false);
-                            productImage.setSortOrder(variant.getImages().size());
+                            productImage.setIsThumbnail(makeThumbnail);
+                            productImage.setSortOrder(nextSortOrder + j);
                             productImage.setUploadedAt(LocalDateTime.now());
-                            productImage.setViewType("gallery");
+                            productImage.setViewType(makeThumbnail ? "front" : "gallery");
                             productImageRepository.save(productImage);
+
+                            if (makeThumbnail) hasThumbnail = true;
                         }
                     }
                     imageIndex += variantImageFiles.size();
@@ -744,8 +866,10 @@ public class ProductServiceImpl implements ProductService {
                     variant.setVariantName(vd.getVariantName());
                     variant.setBarcode(vd.getBarcode());
                     variant.setRetailPrice(vd.getRetailPrice() != null ? vd.getRetailPrice() : 0.0);
+                    variant.setMrp(vd.getMrp());
                     variant.setWholesalePrice(vd.getWholesalePrice() != null ? vd.getWholesalePrice() : 0.0);
                     variant.setWholesaleEnabled(vd.getWholesaleEnabled() != null ? vd.getWholesaleEnabled() : false);
+                    variant.setRetailEnabled(vd.getRetailEnabled() != null ? vd.getRetailEnabled() : true);
                     variant.setMinWholesaleQuantity(vd.getMinWholesaleQuantity());
                     variant.setWholesaleDiscount(vd.getWholesaleDiscount());
                     variant.setActive(true);
@@ -755,6 +879,7 @@ public class ProductServiceImpl implements ProductService {
                             ? vd.getSku()
                             : generateSku(product.getName(), vd.getWeight(), vd.getUnit());
                     variant.setSku(variantSku);
+                    variant.setSlug(generateVariantSlug(product.getName(), vd.getWeight(), vd.getUnit()));
 
                     if (productVariantRepository.existsBySku(variantSku)) {
                         throw new BadRequestException("Variant with SKU '" + variantSku + "' already exists");
@@ -788,6 +913,8 @@ public class ProductServiceImpl implements ProductService {
                             productImageRepository.save(productImage);
                         }
                     }
+                    searchIndexService.refreshSearchIndex(savedVariant.getId());
+
                     imageIndex += variantImageFiles.size();
                 }
             }

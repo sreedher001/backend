@@ -65,7 +65,17 @@ class ProductController {
         List<ProductAutocompleteDto> suggestions = productService.autocompleteProducts(query);
         return ResponseEntity.ok(suggestions);
     }
-    
+
+    /**
+     * Best-selling products ranked by real order volume (falls back to
+     * featured/highest-rated products when there's no order history yet).
+     */
+    @GetMapping("/best-sellers")
+    public ResponseEntity<List<ProductResponseDto>> getBestSellers(
+            @RequestParam(name = "limit", defaultValue = "8") int limit) {
+        return ResponseEntity.ok(productService.getBestSellers(limit));
+    }
+
 
     /**
      * Gets the product by id.
@@ -73,7 +83,7 @@ class ProductController {
      * @param id the id
      * @return the product by id
      */
-    @GetMapping("/search/{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<ProductResponseDto> getProductById(@PathVariable("id") Long id) {
         ProductResponseDto product = productService.getProductById(id);
         return ResponseEntity.ok(product);
@@ -96,7 +106,16 @@ class ProductController {
             @PathVariable("variantId") Long variantId) {
 
     	ProductResponseDto response= productService.findByVariantId(variantId);
-        
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/variants/slug/{slug}")
+    public ResponseEntity<ProductResponseDto> getVariantBySlug(
+            @PathVariable("slug") String slug) {
+
+    	ProductResponseDto response = productService.findByVariantSlug(slug);
+
         return ResponseEntity.ok(response);
     }
     

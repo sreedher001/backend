@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.mindoot.onlinestore.enums.PurchaseType;
 
 import jakarta.persistence.*;
@@ -56,6 +57,7 @@ public class User {
 	private LocalDate updatedOn;
 
 	@Size(max = 120)
+	@JsonIgnore
 	private String password;
 
 	@Column(nullable = false)
@@ -63,10 +65,13 @@ public class User {
 
 	private boolean isPhoneNumberVerified = false;
 
+	@JsonIgnore
 	private String verificationToken;
 
+	@JsonIgnore
 	private String otp;
 
+	@JsonIgnore
 	private LocalDateTime otpExpiry;
 
 	private boolean enabled = true;

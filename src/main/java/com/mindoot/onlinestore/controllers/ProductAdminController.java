@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.apache.commons.imaging.ImageReadException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.mindoot.onlinestore.dto.AddVariantRequest;
+import com.mindoot.onlinestore.dto.CategoryDto;
 import com.mindoot.onlinestore.dto.ProductResponseDto;
 import com.mindoot.onlinestore.dto.ProductWithVariantsRequest;
 import com.mindoot.onlinestore.dto.UpdateProductRequest;
@@ -114,15 +116,30 @@ public class ProductAdminController {
     }
 
     @GetMapping("category")
-    public ResponseEntity<List<Category>> getCategory() {
-        List<Category> categories = categoryService.getAllRootCategories();
+    public ResponseEntity<List<CategoryDto>> getCategory() {
+        List<CategoryDto> categories = categoryService.getAllRootCategories().stream()
+                .map(this::toCategoryDto).collect(Collectors.toList());
         return ResponseEntity.ok(categories);
     }
 
     @GetMapping("category/{categoryId}/subcategories")
-    public ResponseEntity<List<Category>> getSubCategories(@PathVariable("categoryId") Long categoryId) {
-        List<Category> subCategories = categoryService.getSubCategories(categoryId);
+    public ResponseEntity<List<CategoryDto>> getSubCategories(@PathVariable("categoryId") Long categoryId) {
+        List<CategoryDto> subCategories = categoryService.getSubCategories(categoryId).stream()
+                .map(this::toCategoryDto).collect(Collectors.toList());
         return ResponseEntity.ok(subCategories);
+    }
+
+    private CategoryDto toCategoryDto(Category category) {
+        return CategoryDto.builder()
+                .id(category.getId())
+                .name(category.getName())
+                .slug(category.getSlug())
+                .description(category.getDescription())
+                .imageUrl(category.getImage())
+                .sortOrder(category.getSortOrder())
+                .active(category.getActive())
+                .parentId(category.getParent() != null ? category.getParent().getId() : null)
+                .build();
     }
 
     @PostMapping("/check-parent")

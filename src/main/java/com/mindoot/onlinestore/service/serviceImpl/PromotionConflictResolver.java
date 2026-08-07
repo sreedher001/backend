@@ -24,13 +24,14 @@ public class PromotionConflictResolver {
     public List<Promotion> resolve(List<Promotion> promotions,
                                    PricingContext context) {
 
-        Map<PromotionGroup, List<Promotion>> grouped =
+        Map<Object, List<Promotion>> grouped =
             promotions.stream()
-            .collect(Collectors.groupingBy(Promotion::getPromotionGroup));
+            .collect(Collectors.groupingBy(p ->
+                p.getPromotionGroup() != null ? p.getPromotionGroup() : p.getId()));
 
         List<Promotion> selected = new ArrayList<>();
 
-        for (PromotionGroup group : grouped.keySet()) {
+        for (Object group : grouped.keySet()) {
 
             List<Promotion> groupPromos = grouped.get(group);
 

@@ -1,5 +1,6 @@
 package com.mindoot.onlinestore.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.mindoot.onlinestore.enums.PurchaseType;
 
 import jakarta.persistence.*;
@@ -20,11 +21,13 @@ public class CartItem {
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "cart_id")
+	@JsonIgnore
 	private Cart cart;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "variant_id")
 	@ToString.Exclude
+	@JsonIgnore
 	private ProductVariant variant;
 
 	private String variantName;

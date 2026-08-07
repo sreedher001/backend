@@ -1,5 +1,6 @@
 package com.mindoot.onlinestore.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.mindoot.onlinestore.enums.PurchaseType;
 
 import jakarta.persistence.*;
@@ -23,6 +24,7 @@ public class Cart {
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = true, unique = true)
+    @JsonIgnore
     private User user;
 
     @Column(name = "guest_id", unique = true)

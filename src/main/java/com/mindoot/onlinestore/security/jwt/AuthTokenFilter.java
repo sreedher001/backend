@@ -15,7 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContextException;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -25,7 +24,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mindoot.onlinestore.exception.ApplicationException;
 import com.mindoot.onlinestore.security.services.UserDetailsServiceImpl;
 
 import io.jsonwebtoken.ExpiredJwtException;
@@ -148,7 +146,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
 		    response.getWriter().write(responseBody);
 		    return;
 		} catch (Exception e) {
-			logger.error("Cannot set user authentication: {}", e);
+			logger.error("Cannot set user authentication: {}", e.getMessage(), e);
 		}
 	    }
 
@@ -156,15 +154,11 @@ public class AuthTokenFilter extends OncePerRequestFilter {
 	}
 
 	private String parseJwt(HttpServletRequest request) {
-		//String jwt = jwtUtils.getJwtFromCookies(request);
-		//if (null == jwt) {
-			String authHeader = request.getHeader("Authorization");
-			if (authHeader != null && authHeader.startsWith("Bearer ")) {
-				return authHeader.substring(7);
-			} else
-				throw new ApplicationException("Authorization token misssing in headers!",HttpStatus.BAD_REQUEST);
-		//}
-		//return jwt;
+		String authHeader = request.getHeader("Authorization");
+		if (authHeader != null && authHeader.startsWith("Bearer ")) {
+			return authHeader.substring(7);
+		}
+		return null;
 	}
 
 	private String normalizePath(String path) {

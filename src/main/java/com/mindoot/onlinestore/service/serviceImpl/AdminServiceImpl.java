@@ -9,8 +9,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import com.mindoot.onlinestore.exception.ApplicationException;
+import com.mindoot.onlinestore.model.ERole;
 import com.mindoot.onlinestore.model.Role;
 import com.mindoot.onlinestore.model.User;
+import com.mindoot.onlinestore.repository.RoleRepository;
 import com.mindoot.onlinestore.repository.UserRepository;
 import com.mindoot.onlinestore.service.AdminService;
 
@@ -19,6 +21,9 @@ public class AdminServiceImpl implements AdminService {
 
 	@Autowired
 	private UserRepository userRepository;
+
+	@Autowired
+	private RoleRepository roleRepository;
 
 	@Override
 	public List<User> getAllUsers() {
@@ -32,10 +37,11 @@ public class AdminServiceImpl implements AdminService {
 	}
 
 	@Override
-	public User updateUserRole(Long id, Role role) {
+	public User updateUserRole(Long id, ERole roleName) {
 		User user = userRepository.findById(id).orElseThrow(() -> new ApplicationException("User not found",HttpStatus.NOT_FOUND));
+		Role role = roleRepository.findByName(roleName)
+				.orElseThrow(() -> new ApplicationException("Role not found", HttpStatus.BAD_REQUEST));
 		Set<Role> roles = new HashSet<>();
-		roles.addAll(user.getRoles());
 		roles.add(role);
 		user.setRoles(roles);
 		return userRepository.save(user);

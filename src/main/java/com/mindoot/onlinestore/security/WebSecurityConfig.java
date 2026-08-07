@@ -69,6 +69,8 @@ public class WebSecurityConfig {
                 .requestMatchers("/api/dashboard/**", "/api/invoices/**").hasAuthority("ROLE_ADMIN")
                 .requestMatchers("/api/categories").permitAll()
                 .requestMatchers("/api/categories/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/store-settings").permitAll()
+                .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
                 .requestMatchers("/api/users/profile", "/api/orders/**", "/api/wishlist/**", "/api/users/**").authenticated()
                 .requestMatchers("/api/auth/signin", "/api/auth/signup", "/api/auth/send-otp", "/api/auth/verify-otp-login",
                     "/api/auth/forgot-password", "/api/auth/verify-otp", "/api/auth/verify",

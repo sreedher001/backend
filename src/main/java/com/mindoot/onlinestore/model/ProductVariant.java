@@ -3,6 +3,8 @@ package com.mindoot.onlinestore.model;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -25,6 +27,7 @@ public class ProductVariant {
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "product_id", nullable = false)
+	@JsonIgnore
 	private Product product;
 
 	private String weight;
@@ -38,9 +41,23 @@ public class ProductVariant {
 
 	private String barcode;
 
+	/** SEO-friendly URL segment, e.g. "turmeric-powder-100g". Generated from
+	 * the parent product's slug plus weight/unit at creation time. */
+	@Column(unique = true)
+	private String slug;
+
 	private Double retailPrice;
 
+	/** Original "before discount" price. When set higher than retailPrice, the
+	 * storefront shows it struck through next to the current retail price. */
+	private Double mrp;
+
 	private Double wholesalePrice;
+
+	/** Whether this variant is sold to retail customers. Together with
+	 * wholesaleEnabled this forms a Retail-only / Wholesale-only / Both
+	 * availability toggle, editable from a single admin screen. */
+	private Boolean retailEnabled = true;
 
 	private Boolean wholesaleEnabled = false;
 

@@ -39,6 +39,7 @@ public class BannerServiceImpl implements BannerService {
 				banner.setTitle(bannerUploadDto.getTitle());
 				banner.setRedirectUrl(bannerUploadDto.getRedirectUrl());
 				banner.setBannerType(bannerUploadDto.getBannerType());
+				banner.setPurchaseType(bannerUploadDto.getPurchaseType() != null ? bannerUploadDto.getPurchaseType() : "BOTH");
 				banner.setUploadedAt(LocalDateTime.now());
 				banner.setUploadedBy(userInfo.getId());
 				bannerRepository.save(banner);
@@ -65,6 +66,7 @@ public class BannerServiceImpl implements BannerService {
 		existingBanner.setTitle(dto.getTitle());
 		existingBanner.setRedirectUrl(dto.getRedirectUrl());
 		existingBanner.setBannerType(dto.getBannerType());
+		existingBanner.setPurchaseType(dto.getPurchaseType() != null ? dto.getPurchaseType() : "BOTH");
 		existingBanner.setUploadedAt(LocalDateTime.now());
 
 		return bannerRepository.save(existingBanner);

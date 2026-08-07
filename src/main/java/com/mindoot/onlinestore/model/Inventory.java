@@ -2,6 +2,7 @@ package com.mindoot.onlinestore.model;
 
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.mindoot.onlinestore.enums.InventoryStatus;
 
 import jakarta.persistence.*;
@@ -21,6 +22,7 @@ public class Inventory {
 
 	@OneToOne
 	@JoinColumn(name = "variant_id", nullable = false, unique = true)
+	@JsonIgnore
 	private ProductVariant variant;
 
 	private Integer availableQuantity;

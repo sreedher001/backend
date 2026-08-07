@@ -337,8 +337,11 @@ public class PromotionEngineServiceImpl implements PromotionEngineService {
 
 				.toList();
 
-		// pick best coupon per group
-		return available.stream().collect(Collectors.groupingBy(CouponDto::getGroup)).values().stream()
+		// pick best coupon per group; coupons with no group are each their own group
+		// (grouped by promotion group name) so a null group never crashes the grouping.
+		return available.stream()
+				.collect(Collectors.groupingBy(c -> c.getGroup() != null ? c.getGroup().name() : c.getCouponCode()))
+				.values().stream()
 				.map(list -> list.stream().max(Comparator.comparing(CouponDto::getPotentialSavings)).orElse(null))
 				.toList();
 	}

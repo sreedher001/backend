@@ -12,7 +12,9 @@ public class AddVariantRequest {
     private String sku;
     private String barcode;
     private Double retailPrice;
+    private Double mrp;
     private Double wholesalePrice;
+    private Boolean retailEnabled;
     private Boolean wholesaleEnabled;
     private Integer minWholesaleQuantity;
     private Double wholesaleDiscount;

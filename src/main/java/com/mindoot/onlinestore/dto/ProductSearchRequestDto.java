@@ -14,8 +14,12 @@ public class ProductSearchRequestDto {
 
     private Map<String, List<String>> filters;
 
+    private String query;
+
     private Double minPrice;
     private Double maxPrice;
+
+    private Boolean inStock;
 
     private String sort;
 

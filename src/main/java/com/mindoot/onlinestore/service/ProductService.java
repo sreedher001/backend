@@ -42,6 +42,8 @@ public interface ProductService {
 
     ProductResponseDto findByVariantId(Long variantId);
 
+    ProductResponseDto findByVariantSlug(String slug);
+
     List<ProductAutocompleteDto> autocompleteProducts(String query);
 
     ProductResponseDto getAllSimilarItems(Long variantId);
@@ -53,4 +55,6 @@ public interface ProductService {
     void createProductWithVariants(ProductWithVariantsRequest request, List<MultipartFile> variantImages, UserInfo userInfo) throws IOException;
 
     void updateProductWithVariants(Long productId, ProductWithVariantsRequest request, List<MultipartFile> newVariantImages, UserInfo userInfo) throws IOException;
+
+    List<ProductResponseDto> getBestSellers(int limit);
 }

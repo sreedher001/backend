@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.mindoot.onlinestore.dto.OtpRequest;
@@ -33,26 +32,28 @@ public class UserController {
 	@Autowired
 	private TokenUtils tokenUtils;
 	/**
-	 * Gets the user profile.
+	 * Gets the caller's own profile, identified from their JWT.
 	 *
-	 * @param email the email
+	 * @param authorization the bearer token
 	 * @return the user profile
 	 */
 	@GetMapping("/profile")
-	public ResponseEntity<User> getUserProfile(@RequestParam("email") String email) {
+	public ResponseEntity<User> getUserProfile(@RequestHeader("Authorization") String authorization) {
+		String email = tokenUtils.getUserInfo(authorization).getEmail();
 		User userProfile = userService.getUserProfile(email);
 		return ResponseEntity.ok(userProfile);
 	}
 
 	/**
-	 * Update user profile.
+	 * Updates the caller's own profile, identified from their JWT.
 	 *
-	 * @param email the email
+	 * @param authorization the bearer token
 	 * @param updatedUser the updated user
 	 * @return the response entity
 	 */
 	@PostMapping("/profile")
-	public ResponseEntity<User> updateUserProfile(@RequestParam("email") String email, @RequestBody User updatedUser) {
+	public ResponseEntity<User> updateUserProfile(@RequestHeader("Authorization") String authorization, @RequestBody User updatedUser) {
+		String email = tokenUtils.getUserInfo(authorization).getEmail();
 		return ResponseEntity.ok(userService.updateUserProfile(email, updatedUser));
 	}
 	

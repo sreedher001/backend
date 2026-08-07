@@ -7,4 +7,5 @@ public class BannerUploadDto {
     private String title;
     private String redirectUrl;
     private String bannerType;
+    private String purchaseType;
 }

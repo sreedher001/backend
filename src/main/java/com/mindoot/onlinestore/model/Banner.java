@@ -24,10 +24,13 @@ public class Banner {
     private Long id;
 
     private String imageUrl;
-    private String title;        
-    private String redirectUrl;  
-    private String bannerType;   
+    private String title;
+    private String redirectUrl;
+    private String bannerType;
     private LocalDateTime uploadedAt;
     private Long uploadedBy;
+
+    /** Which storefront mode this banner shows in: RETAIL, WHOLESALE, or BOTH. */
+    private String purchaseType;
 }
 

@@ -22,4 +22,11 @@ public interface ProductVariantRepository extends JpaRepository<ProductVariant, 
     boolean existsByBarcode(String barcode);
 
     Optional<ProductVariant> findByProductIdAndWeightAndUnit(Long productId, String weight, String unit);
+
+    Optional<ProductVariant> findBySlug(String slug);
+
+    boolean existsBySlug(String slug);
+
+    /** Fallback for "Best Sellers" when there's no order history yet. */
+    List<ProductVariant> findTop12ByActiveTrueOrderByIsFeaturedDescRatingDesc();
 }
