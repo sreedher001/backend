@@ -38,6 +38,7 @@ import org.springframework.web.server.ResponseStatusException;
 import com.mindoot.onlinestore.dto.MailDto;
 import com.mindoot.onlinestore.dto.OtpRequest;
 import com.mindoot.onlinestore.dto.OtpVerifyRequest;
+import com.mindoot.onlinestore.dto.ResetPasswordRequest;
 import com.mindoot.onlinestore.enums.PurchaseType;
 import com.mindoot.onlinestore.exception.ApplicationException;
 import com.mindoot.onlinestore.model.ERole;
@@ -301,7 +302,12 @@ public class AuthController {
 		}
 		
 		user.setEmailVerified(true);
-		user.setOtp(null); // Remove otp after verification
+		// Do NOT clear the OTP here: this endpoint is also used as the OTP-check
+		// step of the forgot-password flow (login.ts), which calls /reset-password
+		// next with the same OTP. Clearing it here made every reset request fail
+		// with "Invalid or expired OTP" regardless of the correct OTP being entered.
+		// The OTP is still single-use and time-limited: /reset-password clears it
+		// after a successful reset, and it naturally expires after 5 minutes either way.
 		userRepository.save(user);
 
 		return ResponseEntity.ok(new MessageResponse("OTP verified successfully.", HttpStatus.OK));
@@ -310,14 +316,17 @@ public class AuthController {
 	/**
 	 * Reset password.
 	 *
-	 * @param email the email
-	 * @param otp the otp
-	 * @param password the password
+	 * @param request the reset request (email, otp, password) - sent as a JSON
+	 *                body rather than query params, since query params get
+	 *                logged in plaintext by servers/proxies/browser history.
 	 * @return the response entity
 	 */
 	@PostMapping("/reset-password")
-	public ResponseEntity<?> resetPassword(@RequestParam("email") String email, @RequestParam("otp") String otp,
-			@RequestParam("password") String password) {
+	public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest request) {
+		String email = request.getEmail();
+		String otp = request.getOtp();
+		String password = request.getPassword();
+
 		// Find user by email
 		User user = userRepository.findByEmail(email)
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
