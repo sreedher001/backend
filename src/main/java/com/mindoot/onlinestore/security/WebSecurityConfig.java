@@ -67,8 +67,8 @@ public class WebSecurityConfig {
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
                 .requestMatchers("/api/dashboard/**", "/api/invoices/**").hasAuthority("ROLE_ADMIN")
-                .requestMatchers("/api/categories").permitAll()
-                .requestMatchers("/api/categories/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/categories", "/api/categories/**").permitAll()
+                .requestMatchers("/api/categories", "/api/categories/**").hasAuthority("ROLE_ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/store-settings").permitAll()
                 .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
                 .requestMatchers("/api/users/profile", "/api/orders/**", "/api/wishlist/**", "/api/users/**").authenticated()
@@ -82,7 +82,7 @@ public class WebSecurityConfig {
                 .requestMatchers("/api/interest/**", "/api/cart/**").permitAll()
                 .requestMatchers("/api/payments/**").permitAll()
                 .requestMatchers("/actuator/health").permitAll()
-                .requestMatchers("/actuator/**").authenticated()
+                .requestMatchers("/actuator/**").hasAuthority("ROLE_ADMIN")
                 .anyRequest().authenticated());
 
         http.authenticationProvider(authenticationProvider());
@@ -95,11 +95,14 @@ public class WebSecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOriginPatterns(Arrays.asList(
+            // Local development
             "http://localhost:4200",
             "http://localhost:8080",
-            "http://localhost:3000"
+            "http://localhost:3000",
+            // Production frontend (Railway) - TODO: replace with the real frontend URL once provisioned
+            "https://frontend-production-placeholder.up.railway.app"
         ));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
