@@ -99,8 +99,8 @@ public class WebSecurityConfig {
             "http://localhost:4200",
             "http://localhost:8080",
             "http://localhost:3000",
-            // Production frontend (Railway) - TODO: replace with the real frontend URL once provisioned
-            "https://frontend-production-placeholder.up.railway.app"
+            // Production frontend (Railway)
+            "https://frontend-production-21c5.up.railway.app"
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
