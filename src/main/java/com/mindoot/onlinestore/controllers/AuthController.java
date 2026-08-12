@@ -179,6 +179,11 @@ public class AuthController {
 							.orElseThrow(() -> new ApplicationException("Error: Role is not found.", HttpStatus.NOT_FOUND));
 					roles.add(adminRole);
 					break;
+				case "mod":
+					Role modRole = roleRepository.findByName(ERole.ROLE_MODERATOR)
+							.orElseThrow(() -> new ApplicationException("Error: Role is not found.", HttpStatus.NOT_FOUND));
+					roles.add(modRole);
+					break;
 				default:
 					Role userRole = roleRepository.findByName(ERole.ROLE_USER)
 							.orElseThrow(() -> new ApplicationException("Error: Role is not found.", HttpStatus.NOT_FOUND));
@@ -277,7 +282,13 @@ public class AuthController {
 		mailDto.setTemplateName("OTP-template");
 		mailDto.setBody(otp);
 		// Send OTP via email
-		emailService.sendEmail(mailDto);
+		try {
+			emailService.sendEmail(mailDto);
+		} catch (Exception e) {
+			LOGGER.warn("Failed to send OTP email to {}: {}", email, e.getMessage());
+			throw new ApplicationException("Unable to send OTP email right now. Please try again later.",
+					HttpStatus.SERVICE_UNAVAILABLE);
+		}
 
 		return ResponseEntity.ok(new MessageResponse("Enter the OTP sent to your registered email", HttpStatus.OK));
 	}

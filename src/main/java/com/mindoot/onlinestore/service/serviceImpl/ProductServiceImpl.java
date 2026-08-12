@@ -211,7 +211,7 @@ public class ProductServiceImpl implements ProductService {
         inventory.setAvailableQuantity(metadataMap.get("availableQuantity") != null ? ((Number) metadataMap.get("availableQuantity")).intValue() : 0);
         inventory.setReservedQuantity(0);
         inventory.setLowStockThreshold(metadataMap.get("lowStockThreshold") != null ? ((Number) metadataMap.get("lowStockThreshold")).intValue() : 5);
-        inventory.setInventoryStatus(InventoryStatus.IN_STOCK);
+        inventory.setInventoryStatus(InventoryServiceImpl.determineStatus(inventory.getAvailableQuantity()));
         inventory.setLastUpdated(LocalDateTime.now());
         inventoryRepository.save(inventory);
 
@@ -297,7 +297,7 @@ public class ProductServiceImpl implements ProductService {
         inventory.setAvailableQuantity(request.getAvailableQuantity() != null ? request.getAvailableQuantity() : 0);
         inventory.setReservedQuantity(0);
         inventory.setLowStockThreshold(request.getLowStockThreshold() != null ? request.getLowStockThreshold() : 5);
-        inventory.setInventoryStatus(InventoryStatus.IN_STOCK);
+        inventory.setInventoryStatus(InventoryServiceImpl.determineStatus(inventory.getAvailableQuantity()));
         inventory.setLastUpdated(LocalDateTime.now());
         inventoryRepository.save(inventory);
 
@@ -711,7 +711,7 @@ public class ProductServiceImpl implements ProductService {
                 inventory.setAvailableQuantity(vd.getAvailableQuantity() != null ? vd.getAvailableQuantity() : 0);
                 inventory.setReservedQuantity(0);
                 inventory.setLowStockThreshold(vd.getLowStockThreshold() != null ? vd.getLowStockThreshold() : 5);
-                inventory.setInventoryStatus(InventoryStatus.IN_STOCK);
+                inventory.setInventoryStatus(InventoryServiceImpl.determineStatus(inventory.getAvailableQuantity()));
                 inventory.setLastUpdated(LocalDateTime.now());
                 inventoryRepository.save(inventory);
 
@@ -892,7 +892,7 @@ public class ProductServiceImpl implements ProductService {
                     inventory.setAvailableQuantity(vd.getAvailableQuantity() != null ? vd.getAvailableQuantity() : 0);
                     inventory.setReservedQuantity(0);
                     inventory.setLowStockThreshold(vd.getLowStockThreshold() != null ? vd.getLowStockThreshold() : 5);
-                    inventory.setInventoryStatus(InventoryStatus.IN_STOCK);
+                    inventory.setInventoryStatus(InventoryServiceImpl.determineStatus(inventory.getAvailableQuantity()));
                     inventory.setLastUpdated(LocalDateTime.now());
                     inventoryRepository.save(inventory);
 
