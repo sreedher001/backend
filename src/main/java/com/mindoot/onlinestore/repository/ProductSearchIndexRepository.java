@@ -67,7 +67,7 @@ public interface ProductSearchIndexRepository extends
 	    v.wholesale_price,
 	    v.rating,
 	    v.is_featured,
-	    v.active,
+	    (p.active = true AND v.active = true),
 	    v.image_url,
 	    CASE WHEN v.id IN (SELECT i.variant_id FROM inventory i WHERE i.available_quantity > 0) THEN true ELSE false END,
 	    v.sku,

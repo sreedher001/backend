@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.imaging.ImageReadException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -113,6 +114,21 @@ public class ProductAdminController {
     public ResponseEntity<List<ProductResponseDto>> getAllProducts() {
         List<ProductResponseDto> products = productService.getAllProducts();
         return ResponseEntity.ok(products);
+    }
+
+    /**
+     * Paginated product listing for the admin Manage Products screen,
+     * including inactive/unpublished products. This lives under
+     * api/admin/** (ROLE_ADMIN-only per WebSecurityConfig) rather than the
+     * shared public api/products/all-products endpoint, since the latter is
+     * on AuthTokenFilter's public-endpoint bypass list and never gets a
+     * chance to authenticate the caller as an admin.
+     */
+    @GetMapping("list")
+    public ResponseEntity<Page<ProductResponseDto>> getAllProductsForAdmin(
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "20") int size) {
+        return ResponseEntity.ok(productService.getAllProducts(page, size, false));
     }
 
     @GetMapping("category")

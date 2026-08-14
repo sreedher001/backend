@@ -95,9 +95,12 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public Page<ProductResponseDto> getAllProducts(int page, int size) {
+    public Page<ProductResponseDto> getAllProducts(int page, int size, boolean activeOnly) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("uploadedAt").descending());
-        return productRepository.findAll(pageable).map(this::mapToDto);
+        Page<Product> products = activeOnly
+                ? productRepository.findByActiveTrue(pageable)
+                : productRepository.findAll(pageable);
+        return products.map(this::mapToDto);
     }
 
     @Override
@@ -427,6 +430,17 @@ public class ProductServiceImpl implements ProductService {
      * when the store has no order history yet, so the section never renders
      * empty on a fresh deployment.
      */
+    /**
+     * A variant is only safe to surface to shoppers when both it and its
+     * parent product are active — a product being deactivated doesn't
+     * cascade to its variants, so both flags must be checked independently.
+     */
+    private boolean isPubliclyVisible(ProductVariant variant) {
+        return variant.getActive() != null && variant.getActive()
+                && variant.getProduct() != null
+                && variant.getProduct().getActive() != null && variant.getProduct().getActive();
+    }
+
     @Override
     public List<ProductResponseDto> getBestSellers(int limit) {
         List<OrderItemRepository.TopSellingVariant> topSelling = orderItemRepository.findTopSellingVariants(limit);
@@ -436,10 +450,12 @@ public class ProductServiceImpl implements ProductService {
 
         List<ProductVariant> variants;
         if (variantIds.isEmpty()) {
-            variants = productVariantRepository.findTop12ByActiveTrueOrderByIsFeaturedDescRatingDesc();
+            variants = productVariantRepository.findTop12ByActiveTrueOrderByIsFeaturedDescRatingDesc().stream()
+                    .filter(this::isPubliclyVisible)
+                    .collect(Collectors.toList());
         } else {
             Map<Long, ProductVariant> byId = productVariantRepository.findAllById(variantIds).stream()
-                    .filter(v -> v.getActive() != null && v.getActive())
+                    .filter(this::isPubliclyVisible)
                     .collect(Collectors.toMap(ProductVariant::getId, v -> v, (a, b) -> a, LinkedHashMap::new));
             variants = variantIds.stream()
                     .map(byId::get)
@@ -756,6 +772,7 @@ public class ProductServiceImpl implements ProductService {
         if (request.getSku() != null) product.setSku(request.getSku());
         if (request.getBarcode() != null) product.setBarcode(request.getBarcode());
         if (request.getIsFeatured() != null) product.setIsFeatured(request.getIsFeatured());
+        if (request.getActive() != null) product.setActive(request.getActive());
         if (request.getSeoTitle() != null) product.setSeoTitle(request.getSeoTitle());
         if (request.getSeoDescription() != null) product.setSeoDescription(request.getSeoDescription());
         if (request.getTags() != null) product.setTags(request.getTags());

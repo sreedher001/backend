@@ -20,6 +20,11 @@ public class ProductSearchSpecification {
 
 			List<Predicate> predicates = new ArrayList<>();
 
+			// This index powers the public storefront's browse/search page;
+			// deactivated products must never surface here regardless of
+			// what other filters the caller passes.
+			predicates.add(cb.equal(root.get("active"), true));
+
 			if (request.getFilters() != null) {
 
 				for (Map.Entry<String, List<String>> entry : request.getFilters().entrySet()) {

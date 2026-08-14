@@ -22,7 +22,7 @@ public interface ProductService {
 
     List<ProductResponseDto> getAllProducts();
 
-    Page<ProductResponseDto> getAllProducts(int page, int size);
+    Page<ProductResponseDto> getAllProducts(int page, int size, boolean activeOnly);
 
     Page<ProductResponseDto> searchProducts(String query, int page, int size);
 

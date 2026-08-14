@@ -14,6 +14,8 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.server.ResponseStatusException;
 
+import jakarta.validation.ConstraintViolationException;
+
 import java.util.stream.Collectors;
 
 
@@ -45,6 +47,16 @@ public class GlobalExceptionHandler {
 	        request.getDescription(false).replace("uri=", "")
 	    );
 	    return new ResponseEntity<>(error, ex.getHttpStatus());
+	}
+
+	@ExceptionHandler(ConstraintViolationException.class)
+	public ResponseEntity<ErrorResponse> handleConstraintViolation(ConstraintViolationException ex, WebRequest request) {
+		String message = ex.getConstraintViolations().stream()
+				.map(v -> v.getPropertyPath() + ": " + v.getMessage())
+				.collect(Collectors.joining(", "));
+		ErrorResponse error = new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Validation Failed", message,
+				request.getDescription(false).replace("uri=", ""));
+		return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
 	}
 
 	@ExceptionHandler(MethodArgumentNotValidException.class)

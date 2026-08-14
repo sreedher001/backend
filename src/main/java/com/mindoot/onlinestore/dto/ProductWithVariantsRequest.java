@@ -17,6 +17,7 @@ public class ProductWithVariantsRequest {
     private String barcode;
     private String tags;
     private Boolean isFeatured;
+    private Boolean active;
     private Long categoryId;
     private Long subCategoryId;
     private String seoTitle;

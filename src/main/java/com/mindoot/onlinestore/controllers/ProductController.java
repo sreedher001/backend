@@ -43,7 +43,13 @@ class ProductController {
     public ResponseEntity<Page<ProductResponseDto>> getAllProducts(
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name="size" , defaultValue = "12") int size) {
-        return ResponseEntity.ok(productService.getAllProducts(page, size));
+        // Public, unauthenticated endpoint used by the storefront - always
+        // active-only. AuthTokenFilter treats this path as public and skips
+        // JWT parsing for it, so there's no reliable way to tell an admin
+        // caller apart from a shopper here; admin tooling that needs
+        // inactive products uses /api/admin/products/list instead, which is
+        // properly authenticated and ROLE_ADMIN-gated.
+        return ResponseEntity.ok(productService.getAllProducts(page, size, true));
     }
     
     

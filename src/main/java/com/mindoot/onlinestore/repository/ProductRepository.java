@@ -28,6 +28,8 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
 
     List<Product> findByCategoryIdAndActiveTrue(Long categoryId);
 
+    Page<Product> findByActiveTrue(Pageable pageable);
+
     List<Product> findByActiveTrue();
 
     List<Product> findByIsFeaturedTrueAndActiveTrue();
@@ -41,13 +43,15 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
     @Query(value = """
         SELECT p.*
         FROM products p
-        WHERE MATCH(p.name, p.short_description, p.brand, p.tags)
+        WHERE p.active = true
+            AND MATCH(p.name, p.short_description, p.brand, p.tags)
             AGAINST(:query IN NATURAL LANGUAGE MODE)
         ORDER BY p.uploaded_at DESC
         """, countQuery = """
         SELECT COUNT(*)
         FROM products p
-        WHERE MATCH(p.name, p.short_description, p.brand, p.tags)
+        WHERE p.active = true
+            AND MATCH(p.name, p.short_description, p.brand, p.tags)
             AGAINST(:query IN NATURAL LANGUAGE MODE)
         """, nativeQuery = true)
     Page<Product> searchFullText(@Param("query") String query, Pageable pageable);

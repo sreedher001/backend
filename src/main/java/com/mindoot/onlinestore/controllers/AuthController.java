@@ -117,7 +117,7 @@ public class AuthController {
 
 		// Check if email is verified
 		if (!user.isEmailVerified()) {
-			return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Email not verified. Please verify your email.");
+			throw new ApplicationException("Email not verified. Please verify your email.", HttpStatus.FORBIDDEN);
 		}
 		Authentication authentication = authenticationManager.authenticate(
 				new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
