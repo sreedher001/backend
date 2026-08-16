@@ -178,6 +178,13 @@
 </dependency>
 
 		
+		<!-- Google ID token verification for "Sign up with Google" -->
+		<dependency>
+		    <groupId>com.google.api-client</groupId>
+		    <artifactId>google-api-client</artifactId>
+		    <version>2.7.0</version>
+		</dependency>
+
 	</dependencies>
 
 	<build>

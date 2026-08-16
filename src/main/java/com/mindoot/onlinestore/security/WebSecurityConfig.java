@@ -74,7 +74,7 @@ public class WebSecurityConfig {
                 .requestMatchers("/api/users/profile", "/api/orders/**", "/api/wishlist/**", "/api/users/**").authenticated()
                 .requestMatchers("/api/auth/signin", "/api/auth/signup", "/api/auth/send-otp", "/api/auth/verify-otp-login",
                     "/api/auth/forgot-password", "/api/auth/verify-otp", "/api/auth/verify",
-                    "/api/auth/reset-password").permitAll()
+                    "/api/auth/reset-password", "/api/auth/google").permitAll()
                 .requestMatchers("/api/banners/all-banners", "/api/reels/**").permitAll()
                 .requestMatchers("/api/webhook/razorpay").permitAll()
                 .requestMatchers("/api/products/**").permitAll()

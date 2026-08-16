@@ -3,6 +3,7 @@ package com.mindoot.onlinestore.controllers;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -11,9 +12,15 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,6 +51,7 @@ import com.mindoot.onlinestore.exception.ApplicationException;
 import com.mindoot.onlinestore.model.ERole;
 import com.mindoot.onlinestore.model.Role;
 import com.mindoot.onlinestore.model.User;
+import com.mindoot.onlinestore.payload.request.GoogleAuthRequest;
 import com.mindoot.onlinestore.payload.request.LoginRequest;
 import com.mindoot.onlinestore.payload.request.SignupRequest;
 import com.mindoot.onlinestore.payload.response.MessageResponse;
@@ -99,6 +107,18 @@ public class AuthController {
 
 	@Value("${app.redirect.url}")
 	private String appRedirectUrl;
+
+	@Value("${google.oauth.client-id}")
+	private String googleClientId;
+
+	private GoogleIdTokenVerifier googleIdTokenVerifier;
+
+	@PostConstruct
+	private void initGoogleIdTokenVerifier() {
+		googleIdTokenVerifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), GsonFactory.getDefaultInstance())
+				.setAudience(Collections.singletonList(googleClientId))
+				.build();
+	}
 
 	/**
 	 * Authenticate user.
@@ -225,6 +245,74 @@ public class AuthController {
 		LOGGER.info("End - CLASS: AuthController, METHOD : registerUser ");
 		return ResponseEntity
 				.ok(new MessageResponse("Account created successfully. Please verify your email when ready.", HttpStatus.OK));
+	}
+
+	/**
+	 * Sign up or sign in with Google. Verifies the ID token issued by Google
+	 * Identity Services on the frontend, then either logs in the matching
+	 * existing account (by email) or creates a new one on the fly - Google has
+	 * already verified the email address, so no OTP step is needed here.
+	 *
+	 * @param request the Google ID token from the frontend
+	 * @return the same shape as /signin, so the frontend can handle it identically
+	 */
+	@PostMapping("/google")
+	public ResponseEntity<?> googleAuth(@Valid @RequestBody GoogleAuthRequest request) {
+		LOGGER.info("/google api invoked..");
+
+		GoogleIdToken idToken;
+		try {
+			idToken = googleIdTokenVerifier.verify(request.getIdToken());
+		} catch (Exception e) {
+			LOGGER.warn("Google ID token verification threw an exception: {}", e.getMessage());
+			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid Google token");
+		}
+
+		if (idToken == null) {
+			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid Google token");
+		}
+
+		GoogleIdToken.Payload payload = idToken.getPayload();
+		String email = payload.getEmail();
+		String name = (String) payload.get("name");
+
+		User user = userRepository.findByEmail(email).orElse(null);
+
+		if (user == null) {
+			String username = (name != null && !name.isBlank()) ? name : email.substring(0, email.indexOf('@'));
+			if (username.length() > 20) {
+				username = username.substring(0, 20);
+			}
+
+			user = new User(username, email, encoder.encode(UUID.randomUUID().toString()));
+			user.setPreferredPurchaseType(PurchaseType.RETAIL);
+			user.setEmailVerified(true);
+			user.setCreatedOn(LocalDate.now());
+			user.setUpdatedOn(LocalDate.now());
+
+			Role userRole = roleRepository.findByName(ERole.ROLE_USER)
+					.orElseThrow(() -> new ApplicationException("Error: Role is not found.", HttpStatus.NOT_FOUND));
+			Set<Role> roles = new HashSet<>();
+			roles.add(userRole);
+			user.setRoles(roles);
+
+			user = userRepository.save(user);
+			LOGGER.info("New user created via Google sign-up with id : {}", user.getId());
+		} else if (!user.isEmailVerified()) {
+			// Google has already proven ownership of this email, so an existing
+			// account that never finished OTP verification can be unblocked here.
+			user.setEmailVerified(true);
+			user = userRepository.save(user);
+		}
+
+		UserDetailsImpl userDetails = UserDetailsImpl.build(user);
+		ResponseCookie jwtCookie = jwtUtils.generateJwtCookie(userDetails);
+		List<String> roles = userDetails.getAuthorities().stream().map(item -> item.getAuthority())
+				.collect(Collectors.toList());
+
+		return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, jwtCookie.toString())
+				.header("Access-Control-Expose-Headers", "Set-Cookie").body(new UserInfoResponse(userDetails.getId(),
+						userDetails.getUsername(), userDetails.getEmail(), roles, jwtCookie.getValue().toString()));
 	}
 
 	/**
