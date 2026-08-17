@@ -76,6 +76,7 @@ public class WebSecurityConfig {
                     "/api/auth/forgot-password", "/api/auth/verify-otp", "/api/auth/verify",
                     "/api/auth/reset-password", "/api/auth/google").permitAll()
                 .requestMatchers("/api/banners/all-banners", "/api/reels/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/promotions/active-coupons").permitAll()
                 .requestMatchers("/api/webhook/razorpay").permitAll()
                 .requestMatchers("/api/products/**").permitAll()
                 .requestMatchers("/api/reviews/**").permitAll()
