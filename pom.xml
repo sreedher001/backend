@@ -185,6 +185,13 @@
 		    <version>2.7.0</version>
 		</dependency>
 
+		<!-- Twilio SMS for phone OTP login -->
+		<dependency>
+		    <groupId>com.twilio.sdk</groupId>
+		    <artifactId>twilio</artifactId>
+		    <version>10.5.0</version>
+		</dependency>
+
 	</dependencies>
 
 	<build>

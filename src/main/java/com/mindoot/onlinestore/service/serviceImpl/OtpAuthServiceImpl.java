@@ -23,7 +23,7 @@ import com.mindoot.onlinestore.repository.RoleRepository;
 import com.mindoot.onlinestore.repository.UserRepository;
 import com.mindoot.onlinestore.security.services.UserDetailsImpl;
 import com.mindoot.onlinestore.service.OtpAuthService;
-import com.mindoot.onlinestore.service.SnsSmsService;
+import com.mindoot.onlinestore.service.SmsService;
 
 @Service
 public class OtpAuthServiceImpl implements OtpAuthService {
@@ -34,8 +34,8 @@ public class OtpAuthServiceImpl implements OtpAuthService {
     @Autowired
     private NotificationServiceImpl notificationService;
     
-    @Autowired 
-    private SnsSmsService snsSmsService;
+    @Autowired
+    private SmsService snsSmsService;
     
     @Autowired
     private RoleRepository roleRepository;

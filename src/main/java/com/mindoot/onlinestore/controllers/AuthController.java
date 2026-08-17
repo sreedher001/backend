@@ -102,7 +102,7 @@ public class AuthController {
 	@Autowired
 	private OtpAuthService otpAuthService;
 
-	@Value("${spring.mail.username}")
+	@Value("${app.mail.from}")
 	private String from;
 
 	@Value("${app.redirect.url}")

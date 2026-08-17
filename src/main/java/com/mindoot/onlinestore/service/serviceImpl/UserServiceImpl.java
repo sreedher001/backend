@@ -14,7 +14,7 @@ import com.mindoot.onlinestore.model.User;
 import com.mindoot.onlinestore.repository.UserRepository;
 import com.mindoot.onlinestore.service.EmailService;
 import com.mindoot.onlinestore.service.OtpService;
-import com.mindoot.onlinestore.service.SnsSmsService;
+import com.mindoot.onlinestore.service.SmsService;
 import com.mindoot.onlinestore.service.UserService;
 
 import jakarta.transaction.Transactional;
@@ -31,8 +31,8 @@ public class UserServiceImpl implements UserService {
 	@Autowired
 	private EmailService emailService;
 	
-	@Autowired 
-	private SnsSmsService snsSmsService;
+	@Autowired
+	private SmsService snsSmsService;
 
 	@Override
 	public User getUserProfile(String email) {

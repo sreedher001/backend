@@ -24,16 +24,14 @@ import com.mindoot.onlinestore.utility.UserInfo;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
@@ -41,6 +39,7 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 
@@ -57,8 +56,14 @@ public class EmailServiceImpl implements EmailService {
 	@Value("${app.redirect.url}")
 	private String appRedirectUrl;
 
-	@Autowired
-	private JavaMailSender mailSender;
+	// Sent over Resend's HTTPS API rather than raw SMTP: Railway (and most
+	// PaaS hosts) block or don't route outbound traffic on SMTP ports
+	// (25/465/587), which made every OTP/order email time out in production
+	// even with correct SMTP credentials. HTTPS on 443 is never blocked.
+	@Value("${resend.api.key}")
+	private String resendApiKey;
+
+	private final RestClient restClient = RestClient.create("https://api.resend.com");
 
 	@Autowired
 	private UserRepository userRepository;
@@ -83,15 +88,12 @@ public class EmailServiceImpl implements EmailService {
 		PdfUtils pdfUtils = new PdfUtils();
 		byte[] pdfBytes = pdfUtils.generatePdf(order);
 
-		MimeMessage message = mailSender.createMimeMessage();
-		MimeMessageHelper helper = new MimeMessageHelper(message, true);
-		helper.setFrom(mailFrom);
-		helper.setTo(order.getUser().getEmail());
-		helper.setSubject("Invoice for your order #" + order.getOrderNumber());
-		helper.setText(htmlContent, true);
-		helper.addAttachment("invoice.pdf", new org.springframework.core.io.ByteArrayResource(pdfBytes));
+		Map<String, Object> attachment = Map.of(
+			"filename", "invoice.pdf",
+			"content", Base64.getEncoder().encodeToString(pdfBytes));
 
-		mailSender.send(message);
+		sendViaResend(mailFrom, List.of(order.getUser().getEmail()), "Invoice for your order #" + order.getOrderNumber(),
+			htmlContent, List.of(attachment));
 	}
 
 	@Override
@@ -198,16 +200,29 @@ public class EmailServiceImpl implements EmailService {
 
 	@Override
 	public void sendMail(Order order, String htmlContent, String from, List<String> toEmailAddressList, String subject) {
+		sendViaResend(from, toEmailAddressList, subject, htmlContent, null);
+	}
+
+	private void sendViaResend(String from, List<String> to, String subject, String htmlContent, List<Map<String, Object>> attachments) {
 		try {
-			MimeMessage message = mailSender.createMimeMessage();
-			MimeMessageHelper helper = new MimeMessageHelper(message, false, "UTF-8");
-			helper.setFrom(from);
-			helper.setTo(toEmailAddressList.toArray(new String[0]));
-			helper.setSubject(subject);
-			helper.setText(htmlContent, true);
-			mailSender.send(message);
+			Map<String, Object> body = new java.util.HashMap<>(Map.of(
+				"from", from,
+				"to", to,
+				"subject", subject,
+				"html", htmlContent));
+			if (attachments != null && !attachments.isEmpty()) {
+				body.put("attachments", attachments);
+			}
+
+			restClient.post()
+				.uri("/emails")
+				.header("Authorization", "Bearer " + resendApiKey)
+				.contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+				.body(body)
+				.retrieve()
+				.toBodilessEntity();
 		} catch (Exception e) {
-			logger.error("Failed to send email: {}", e.getMessage(), e);
+			logger.error("Failed to send email via Resend: {}", e.getMessage(), e);
 			throw new ApplicationException("Failed to send notification email", HttpStatus.BAD_REQUEST);
 		}
 	}
