@@ -24,6 +24,10 @@ public class Banner {
     private Long id;
 
     private String imageUrl;
+
+    /** Optional separate crop shown on narrow (mobile) viewports; falls back to imageUrl when unset. */
+    private String mobileImageUrl;
+
     private String title;
     private String redirectUrl;
     private String bannerType;

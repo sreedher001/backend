@@ -29,13 +29,21 @@ public class BannerServiceImpl implements BannerService {
 	private BannerRepository bannerRepository;
 
 	@Override
-	public void uploadBanner(MultipartFile[] files, BannerUploadDto bannerUploadDto, UserInfo userInfo) {
+	public void uploadBanner(MultipartFile[] files, MultipartFile mobileFile, BannerUploadDto bannerUploadDto, UserInfo userInfo) {
 		try {
 			List<String> uploadedUrls = fileStorageService.uploadImages(files, "banners");
+
+			// A separate mobile crop only makes sense when this request is
+			// creating a single banner - a batch of unrelated desktop images
+			// can't share one mobile image.
+			String mobileImageUrl = (mobileFile != null && !mobileFile.isEmpty() && uploadedUrls.size() == 1)
+					? fileStorageService.uploadImage(mobileFile, "banners")
+					: null;
 
 			for (String imageUrl : uploadedUrls) {
 				Banner banner = new Banner();
 				banner.setImageUrl(imageUrl);
+				banner.setMobileImageUrl(mobileImageUrl);
 				banner.setTitle(bannerUploadDto.getTitle());
 				banner.setRedirectUrl(bannerUploadDto.getRedirectUrl());
 				banner.setBannerType(bannerUploadDto.getBannerType());
@@ -59,9 +67,29 @@ public class BannerServiceImpl implements BannerService {
 	}
 
 	@Override
-	public Banner updateBanner(Long id, BannerUploadDto dto) {
+	public Banner updateBanner(Long id, MultipartFile file, MultipartFile mobileFile, BannerUploadDto dto) {
 		Banner existingBanner = bannerRepository.findById(id)
 			.orElseThrow(() -> new ApplicationException("Banner not found with ID: " + id, HttpStatus.NOT_FOUND));
+
+		try {
+			if (file != null && !file.isEmpty()) {
+				String oldImageUrl = existingBanner.getImageUrl();
+				existingBanner.setImageUrl(fileStorageService.uploadImage(file, "banners"));
+				if (oldImageUrl != null) {
+					fileStorageService.deleteFile(oldImageUrl);
+				}
+			}
+			if (mobileFile != null && !mobileFile.isEmpty()) {
+				String oldMobileImageUrl = existingBanner.getMobileImageUrl();
+				existingBanner.setMobileImageUrl(fileStorageService.uploadImage(mobileFile, "banners"));
+				if (oldMobileImageUrl != null) {
+					fileStorageService.deleteFile(oldMobileImageUrl);
+				}
+			}
+		} catch (Exception e) {
+			LOGGER.error("Failed to update banner image: {}", e.getMessage(), e);
+			throw new RuntimeException("Failed to update banner image: " + e.getMessage());
+		}
 
 		existingBanner.setTitle(dto.getTitle());
 		existingBanner.setRedirectUrl(dto.getRedirectUrl());
@@ -79,6 +107,9 @@ public class BannerServiceImpl implements BannerService {
 
 		if (banner.getImageUrl() != null) {
 			fileStorageService.deleteFile(banner.getImageUrl());
+		}
+		if (banner.getMobileImageUrl() != null) {
+			fileStorageService.deleteFile(banner.getMobileImageUrl());
 		}
 
 		bannerRepository.delete(banner);

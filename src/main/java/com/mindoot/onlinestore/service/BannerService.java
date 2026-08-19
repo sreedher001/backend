@@ -12,11 +12,11 @@ import com.mindoot.onlinestore.utility.UserInfo;
 @Component
 public interface BannerService {
 
-	void uploadBanner(MultipartFile[] files, BannerUploadDto dto, UserInfo userInfo);
+	void uploadBanner(MultipartFile[] files, MultipartFile mobileFile, BannerUploadDto dto, UserInfo userInfo);
 
 	List<Banner> getAllBanners();
 
-    Banner updateBanner(Long id, BannerUploadDto dto);
+    Banner updateBanner(Long id, MultipartFile file, MultipartFile mobileFile, BannerUploadDto dto);
 
     void deleteBanner(Long id);
 	

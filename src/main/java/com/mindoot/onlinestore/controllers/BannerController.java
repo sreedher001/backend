@@ -10,7 +10,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -40,13 +39,14 @@ public class BannerController {
 	@PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<MessageResponse> uploadBanner(
 	        @RequestPart("file") MultipartFile[] files,
+	        @RequestPart(value = "mobileFile", required = false) MultipartFile mobileFile,
 	        @RequestPart("metadata") String metadataJson,
 	        @RequestHeader("Authorization") String token) throws IOException {
 
 	    try {
 	        UserInfo userInfo = tokenUtils.getUserInfo(token.substring(7));
 	        BannerUploadDto dto = new ObjectMapper().readValue(metadataJson, BannerUploadDto.class);
-	        bannerService.uploadBanner(files, dto, userInfo);
+	        bannerService.uploadBanner(files, mobileFile, dto, userInfo);
 	        return ResponseEntity.ok(new MessageResponse("Banner uploaded successfully", HttpStatus.OK));
 	    } catch (Exception e) {
 	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -60,10 +60,20 @@ public class BannerController {
         return ResponseEntity.ok(bannerService.getAllBanners());
     }
 
-    @PostMapping("/update/{id}")
-    public ResponseEntity<Banner> updateBanner(@PathVariable("id") Long id, @RequestBody BannerUploadDto dto) {
-        Banner updated = bannerService.updateBanner(id, dto);
-        return ResponseEntity.ok(updated);
+    @PostMapping(value = "/update/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> updateBanner(
+            @PathVariable("id") Long id,
+            @RequestPart(value = "file", required = false) MultipartFile file,
+            @RequestPart(value = "mobileFile", required = false) MultipartFile mobileFile,
+            @RequestPart("metadata") String metadataJson) {
+        try {
+            BannerUploadDto dto = new ObjectMapper().readValue(metadataJson, BannerUploadDto.class);
+            Banner updated = bannerService.updateBanner(id, file, mobileFile, dto);
+            return ResponseEntity.ok(updated);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new MessageResponse("Update failed: " + e.getMessage(), HttpStatus.BAD_REQUEST));
+        }
     }
 
     @PostMapping("/delete/{id}")
